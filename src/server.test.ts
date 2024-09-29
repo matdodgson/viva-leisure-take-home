@@ -154,4 +154,31 @@ describe("workouts", () => {
             expect(response.body).toEqual([workout1]);
         });
     });
+
+    describe("when given an invalid duration", () => {
+        it("returns a 400", async () => {
+            const repository = workoutRepository([]);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get(`/api/workouts?duration=abc`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(400);
+        });
+    });
+
+    describe("when given a duration", () => {
+        it("filters correctly", async () => {
+            const workout1: Workout = { ...workout, durationMins: 20 };
+            const workout2: Workout = { ...workout, durationMins: 30 };
+            const repository = workoutRepository([workout1, workout2]);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get(`/api/workouts?duration=20`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(200);
+            expect(response.body).toEqual([workout1]);
+        });
+    });
 });

@@ -5,6 +5,7 @@ export interface WorkoutFilters {
     searchName?: string;
     durationMin?: number;
     durationMax?: number;
+    duration?: number;
 }
 
 export interface WorkoutRepository {
@@ -29,6 +30,9 @@ export function workoutRepository(workouts: Workout[]) {
             }
             if (filters.durationMin && filters.durationMax) {
                 filtered = filtered.filter(w => w.durationMins >= filters.durationMin! && w.durationMins <= filters.durationMax!);
+            }
+            if (filters.duration) {
+                filtered = filtered.filter(w => w.durationMins === filters.duration);
             }
             return filtered;
         },
