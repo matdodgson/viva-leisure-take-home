@@ -66,6 +66,21 @@ export function server(workoutRepository: WorkoutRepository) {
         res.json(workoutRepository.workouts(filters));
     });
 
+    app.get("/api/workout/:workoutId", function (req, res) {
+        if (!("workoutId" in req.params)) {
+            errorResponse(res, "no workoutId");
+            res.end();
+        }
+
+        const workout = workoutRepository.workout(req.params["workoutId"]);
+        if (!workout) {
+            res.status(404).json({});
+            res.end();
+        }
+
+        res.json(workout);
+    });
+
     return {
         app,
         listen: (port: number) => {

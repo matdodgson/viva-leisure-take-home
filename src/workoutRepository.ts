@@ -11,6 +11,7 @@ export interface WorkoutFilters {
 export interface WorkoutRepository {
     listTags(): string[];
     workouts(filters: WorkoutFilters): Workout[];
+    workout(id: string): Workout | undefined;
 }
 
 export function workoutRepository(workouts: Workout[]) {
@@ -36,6 +37,10 @@ export function workoutRepository(workouts: Workout[]) {
             }
             return filtered;
         },
+        workout: function (id: string): Workout | undefined {
+            const filtered = workouts.filter(w => w.id === id);
+            return filtered.length > 0 ? filtered[0] : undefined;
+        }
     }
     return repository;
 }
