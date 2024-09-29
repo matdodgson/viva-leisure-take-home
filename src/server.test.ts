@@ -82,4 +82,23 @@ describe("workouts", () => {
             expect(response.status).toEqual(400);
         });
     });
+
+    describe("when a searchName filter is specified", () => {
+        it("filters correctly", async () => {
+            const workout1 = { ...workout, name: "thename1" };
+            const workout2 = { ...workout, name: "thename2" };
+            const workouts: Workout[] = [
+                workout1,
+                workout2
+            ]
+            const repository = workoutRepository(workouts);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get("/api/workouts?searchName=name1")
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(200);
+            expect(response.body).toEqual([workout1]);
+        });
+    });
 });

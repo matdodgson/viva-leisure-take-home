@@ -6,6 +6,15 @@ function errorResponse(res: express.Response, error: string, statusCode: number 
     res.status(statusCode).json({ error });
 }
 
+function stringParameter(req: express.Request, res: express.Response, paramName: string): string {
+    if (typeof req.query[paramName] !== "string") {
+        errorResponse(res, `bad ${paramName}`);
+        res.end();
+    }
+
+    return req.query[paramName] as string;
+}
+
 export function server(workoutRepository: WorkoutRepository) {
     const app = express();
 
@@ -20,12 +29,10 @@ export function server(workoutRepository: WorkoutRepository) {
     app.get("/api/workouts", function (req, res) {
         let filters: WorkoutFilters = {};
         if (req.query["tag"]) {
-            if (typeof req.query["tag"] !== "string") {
-                errorResponse(res, "bad tag");
-                res.end();
-            }
-
-            filters = { ...filters, tag: req.query["tag"] as string }
+            filters = { ...filters, tag: stringParameter(req, res, "tag") }
+        }
+        if (req.query["searchName"]) {
+            filters = { ...filters, searchName: stringParameter(req, res, "searchName") }
         }
 
         res.json(workoutRepository.workouts(filters));
