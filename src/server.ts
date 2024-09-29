@@ -5,8 +5,11 @@ export function server(workoutRepository: WorkoutRepository) {
     const app = express();
 
     app.get("/api/list-tags", function (req, res) {
-        const tags = workoutRepository.listTags();
-        res.json(tags);
+        res.json(workoutRepository.listTags());
+    });
+
+    app.get("/api/workouts", function (req, res) {
+        res.json(workoutRepository.workouts());
     });
 
     return {
