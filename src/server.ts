@@ -56,6 +56,12 @@ export function server(workoutRepository: WorkoutRepository) {
                 durationMax: numericalParameter(req, res, "durationMax")
             }
         }
+        if (req.query["duration"]) {
+            filters = {
+                ...filters,
+                duration: numericalParameter(req, res, "duration"),
+            }
+        }
 
         res.json(workoutRepository.workouts(filters));
     });
