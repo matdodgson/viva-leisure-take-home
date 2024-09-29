@@ -67,4 +67,19 @@ describe("workouts", () => {
             expect(response.body).toEqual([workout2]);
         });
     });
+
+    describe("when a tag filter that results in a parsed object is specified", () => {
+        it("returns a 400", async () => {
+            const workouts: Workout[] = [
+                workout,
+            ]
+            const repository = workoutRepository(workouts);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get("/api/workouts?tag[a]=tag1")
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(400);
+        });
+    });
 });
