@@ -15,6 +15,17 @@ function stringParameter(req: express.Request, res: express.Response, paramName:
     return req.query[paramName] as string;
 }
 
+function numericalParameter(req: express.Request, res: express.Response, paramName: string): number {
+    const stringValue = stringParameter(req, res, paramName);
+    const numericalValue = parseInt(stringValue);
+    if (isNaN(numericalValue)) {
+        errorResponse(res, `bad ${paramName}`);
+        res.end();
+    }
+
+    return numericalValue;
+}
+
 export function server(workoutRepository: WorkoutRepository) {
     const app = express();
 
@@ -33,6 +44,17 @@ export function server(workoutRepository: WorkoutRepository) {
         }
         if (req.query["searchName"]) {
             filters = { ...filters, searchName: stringParameter(req, res, "searchName") }
+        }
+        if (req.query["durationMin"] || req.query["durationMax"]) {
+            if (!(req.query["durationMin"] && req.query["durationMax"])) {
+                errorResponse(res, "you must specify both durationMin and durationMax");
+                return;
+            }
+            filters = {
+                ...filters,
+                durationMin: numericalParameter(req, res, "durationMin"),
+                durationMax: numericalParameter(req, res, "durationMax")
+            }
         }
 
         res.json(workoutRepository.workouts(filters));
