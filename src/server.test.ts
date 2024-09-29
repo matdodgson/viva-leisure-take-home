@@ -101,4 +101,57 @@ describe("workouts", () => {
             expect(response.body).toEqual([workout1]);
         });
     });
+
+    describe.each([
+        [10, undefined],
+        [undefined, 10],
+    ])("when given an invalid combination of durationMin and durationMax", (durationMin?: number, durationMax?: number) => {
+        it("returns a 400", async () => {
+            const repository = workoutRepository([]);
+            const server1 = server(repository);
+            const query = Object.entries({ durationMin, durationMax })
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                .filter(([k, v]) => v)
+                .map(([k, v]) => `${k}=${v}`)
+                .join("&");
+            const response = await request(server1.app)
+                .get(`/api/workouts?${query}`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(400);
+        });
+    });
+
+    describe.each([
+        [10, "abc"],
+        ["abc", 10],
+    ])("when given an invalid durationMin or durationMax", (durationMin: number | string, durationMax: number | string) => {
+        it("returns a 400", async () => {
+            const repository = workoutRepository([]);
+            const server1 = server(repository);
+            const query = Object.entries({ durationMin, durationMax })
+                .map(([k, v]) => `${k}=${v}`)
+                .join("&");
+            const response = await request(server1.app)
+                .get(`/api/workouts?${query}`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(400);
+        });
+    });
+
+    describe("when given a durationMin and durationMax", () => {
+        it("filters correctly", async () => {
+            const workout1: Workout = { ...workout, durationMins: 10 };
+            const workout2: Workout = { ...workout, durationMins: 20 };
+            const repository = workoutRepository([workout1, workout2]);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get(`/api/workouts?durationMin=10&durationMax=11`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(200);
+            expect(response.body).toEqual([workout1]);
+        });
+    });
 });

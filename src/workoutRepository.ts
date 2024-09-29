@@ -3,6 +3,8 @@ import { Workout } from "./workout";
 export interface WorkoutFilters {
     tag?: string;
     searchName?: string;
+    durationMin?: number;
+    durationMax?: number;
 }
 
 export interface WorkoutRepository {
@@ -24,6 +26,9 @@ export function workoutRepository(workouts: Workout[]) {
             }
             if (filters.searchName) {
                 filtered = filtered.filter(w => w.name.includes(filters.searchName!));
+            }
+            if (filters.durationMin && filters.durationMax) {
+                filtered = filtered.filter(w => w.durationMins >= filters.durationMin! && w.durationMins <= filters.durationMax!);
             }
             return filtered;
         },
