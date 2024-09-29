@@ -48,4 +48,23 @@ describe("workouts", () => {
             expect(response.body).toEqual(workouts);
         });
     });
+
+    describe("when tag filters are specified", () => {
+        it("filters on the last tag specified", async () => {
+            const workout1 = { ...workout, tags: ["tag1"] };
+            const workout2 = { ...workout, tags: ["tag2"] };
+            const workouts: Workout[] = [
+                workout1,
+                workout2
+            ]
+            const repository = workoutRepository(workouts);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get("/api/workouts?tag=tag1&tag=tag2")
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(200);
+            expect(response.body).toEqual([workout2]);
+        });
+    });
 });
