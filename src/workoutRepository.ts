@@ -1,8 +1,12 @@
 import { Workout } from "./workout";
 
+export interface WorkoutFilters {
+    tag?: string;
+}
+
 export interface WorkoutRepository {
     listTags(): string[];
-    workouts(): Workout[];
+    workouts(filters: WorkoutFilters): Workout[];
 }
 
 export function workoutRepository(workouts: Workout[]) {
@@ -12,8 +16,12 @@ export function workoutRepository(workouts: Workout[]) {
             const tagsNoDupes = [...new Set(tags)];
             return tagsNoDupes;
         },
-        workouts: function (): Workout[] {
-            return workouts;
+        workouts: function (filters: WorkoutFilters): Workout[] {
+            let filtered = workouts;
+            if (filters.tag) {
+                filtered = filtered.filter(w => w.tags.includes(filters.tag!));
+            }
+            return filtered;
         },
     }
     return repository;
