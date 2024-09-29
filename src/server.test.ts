@@ -181,4 +181,32 @@ describe("workouts", () => {
             expect(response.body).toEqual([workout1]);
         });
     });
+
+    describe("when given a non-existent workout id", () => {
+        it("returns a 404", async () => {
+            const workout1: Workout = { ...workout, id: "jhwerc78y23489c7y" };
+            const repository = workoutRepository([workout1]);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get(`/api/workout/uh345c98y2345c90u`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(404);
+        });
+    });
+
+    describe("when given a workout id", () => {
+        it("filters correctly", async () => {
+            const workout1: Workout = { ...workout, id: "jhwerc78y23489c7y" };
+            const workout2: Workout = { ...workout, id: "uh345c98y2345c90u" };
+            const repository = workoutRepository([workout1, workout2]);
+            const server1 = server(repository);
+            const response = await request(server1.app)
+                .get(`/api/workout/uh345c98y2345c90u`)
+                .set("Accept", "application/json");
+            expect(response.headers["content-type"]).toMatch(/json/);
+            expect(response.status).toEqual(200);
+            expect(response.body).toEqual(workout2);
+        });
+    });
 });
