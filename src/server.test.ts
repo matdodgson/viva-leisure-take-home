@@ -4,6 +4,7 @@ import { getServer as serverGetServer } from "./server";
 import supertestRequest from "supertest";
 import { randomUUID } from "node:crypto";
 import { App } from "supertest/types";
+import { getAI } from "./ai";
 
 const workout: Workout = {
   id: "acd7e6a4-03bc-499c-b85b-a3efe7625fad",
@@ -15,7 +16,7 @@ const workout: Workout = {
 
 function getServer(workouts: Workout[]) {
   const repository = workoutRepository(workouts);
-  return serverGetServer(repository);
+  return serverGetServer(repository, getAI());
 }
 
 function getRequest(app: App, url: string, expectedStatusCode: number = 200) {
@@ -182,3 +183,33 @@ describe("workouts", () => {
     });
   });
 });
+
+// describe("suggested workout", () => {
+//   describe("when given a valid heading", () => {
+//     it("returns a list of 5 or more exercises", async () => {
+//       const server = getServer([]);
+//       const response = await getRequest(
+//         server.app,
+//         "/api/ai/suggested-workout?heading=Endurance+Challenge",
+//         200,
+//       );
+//       const body = response.body as SuggestedWorkout;
+//       expect(Array.isArray(body.steps)).toBe(true);
+//       expect(body.steps.length).toBeGreaterThanOrEqual(5);
+//     });
+//   });
+
+//   describe("when given an inappropriate heading", () => {
+//     it("returns an empty list", async () => {
+//       const server = getServer([]);
+//       const response = await getRequest(
+//         server.app,
+//         "/api/ai/suggested-workout?heading=Penis+Challenge",
+//         200,
+//       );
+//       const body = response.body as SuggestedWorkout;
+//       expect(Array.isArray(body.steps)).toBe(true);
+//       expect(body.steps).toHaveLength(0);
+//     });
+//   });
+// });
