@@ -5,6 +5,7 @@ import {
   errorResponse,
   numericalParameter,
   stringParameter,
+  ValidationError,
 } from "./expressUtils";
 
 export function getServer(workoutRepository: WorkoutRepository) {
@@ -65,14 +66,19 @@ export function getServer(workoutRepository: WorkoutRepository) {
     res.json(workout);
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use(
     (
       err: Error,
       req: express.Request,
       res: express.Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       next: unknown,
     ) => {
+      if (err instanceof ValidationError) {
+        errorResponse(res, err.message);
+        return;
+      }
+
       console.error(err.stack);
       errorResponse(res, "Internal server error", 500);
     },

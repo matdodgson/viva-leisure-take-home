@@ -8,5 +8,5 @@ const srcPath = import.meta.dirname;
 const workoutsPath = join(srcPath, "..", "data", "workouts.json");
 const workouts = JSON.parse(readFileSync(workoutsPath).toString()) as Workout[];
 const repository = workoutRepository(workouts);
-const server1 = getServer(repository);
-server1.listen(3000);
+const server = getServer(repository);
+server.listen(3000);

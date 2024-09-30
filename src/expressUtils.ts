@@ -1,5 +1,11 @@
 import express from "express";
 
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export function errorResponse(
   res: express.Response,
   error: string,
@@ -17,9 +23,7 @@ export function stringParameter(
     return req.query[paramName];
   }
 
-  errorResponse(res, `bad ${paramName}`);
-  res.end();
-  throw new Error("unreachable");
+  throw new ValidationError(`bad ${paramName}`);
 }
 
 export function numericalParameter(
@@ -33,7 +37,5 @@ export function numericalParameter(
     return numericalValue;
   }
 
-  errorResponse(res, `bad ${paramName}`);
-  res.end();
-  throw new Error("unreachable");
+  throw new ValidationError(`bad ${paramName}`);
 }
