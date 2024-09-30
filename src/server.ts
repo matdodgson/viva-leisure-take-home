@@ -7,8 +7,9 @@ import {
   stringParameter,
   ValidationError,
 } from "./expressUtils";
+import { AI } from "./ai";
 
-export function getServer(workoutRepository: WorkoutRepository) {
+export function getServer(workoutRepository: WorkoutRepository, ai: AI) {
   const app = express();
 
   app.set("query parser", function (str: string) {
@@ -54,16 +55,28 @@ export function getServer(workoutRepository: WorkoutRepository) {
   app.get("/api/workout/:workoutId", function (req, res) {
     if (!("workoutId" in req.params)) {
       errorResponse(res, "no workoutId");
-      res.end();
+      return;
     }
 
     const workout = workoutRepository.workout(req.params["workoutId"]);
     if (!workout) {
       res.status(404).json({});
-      res.end();
+      return;
     }
 
     res.json(workout);
+  });
+
+  app.get("/api/ai/suggested-workout", async function (req, res) {
+    if (!req.query["heading"]) {
+      errorResponse(res, "no heading");
+      return;
+    }
+
+    const suggestedWorkout = await ai.suggestedWorkout(
+      stringParameter(req, res, "heading"),
+    );
+    res.json(suggestedWorkout);
   });
 
   app.use(
