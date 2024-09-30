@@ -1,8 +1,9 @@
 import { Workout } from "./workout";
 import { workoutRepository } from "./workoutRepository";
-import { server } from "./server";
-import request from "supertest";
+import { getServer as serverGetServer } from "./server";
+import supertestRequest from "supertest";
 import { randomUUID } from "node:crypto";
+import { App } from "supertest/types";
 
 const workout: Workout = {
   id: "acd7e6a4-03bc-499c-b85b-a3efe7625fad",
@@ -12,6 +13,19 @@ const workout: Workout = {
   tags: ["tag1", "tag2"],
 };
 
+function getServer(workouts: Workout[]) {
+  const repository = workoutRepository(workouts);
+  return serverGetServer(repository);
+}
+
+function getRequest(app: App, url: string, expectedStatusCode: number = 200) {
+  return supertestRequest(app)
+    .get(url)
+    .set("Accept", "application/json")
+    .expect("Content-Type", /json/)
+    .expect(expectedStatusCode);
+}
+
 describe("list-tags", () => {
   describe("when configured with tags", () => {
     it("returns deduped tags", async () => {
@@ -19,13 +33,8 @@ describe("list-tags", () => {
         { ...workout, tags: ["tag1"] },
         { ...workout, tags: ["tag1"] },
       ];
-      const repository = workoutRepository(workouts);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get("/api/list-tags")
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer(workouts);
+      const response = await getRequest(server.app, "/api/list-tags", 200);
       expect(response.body).toEqual(["tag1"]);
     });
   });
@@ -38,13 +47,8 @@ describe("workouts", () => {
         { ...workout, id: randomUUID() },
         { ...workout, id: randomUUID() },
       ];
-      const repository = workoutRepository(workouts);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get("/api/workouts")
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer(workouts);
+      const response = await getRequest(server.app, "/api/workouts", 200);
       expect(response.body).toEqual(workouts);
     });
   });
@@ -54,13 +58,12 @@ describe("workouts", () => {
       const workout1 = { ...workout, tags: ["tag1"] };
       const workout2 = { ...workout, tags: ["tag2"] };
       const workouts: Workout[] = [workout1, workout2];
-      const repository = workoutRepository(workouts);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get("/api/workouts?tag=tag1&tag=tag2")
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer(workouts);
+      const response = await getRequest(
+        server.app,
+        "/api/workouts?tag=tag1&tag=tag2",
+        200,
+      );
       expect(response.body).toEqual([workout2]);
     });
   });
@@ -68,13 +71,8 @@ describe("workouts", () => {
   describe("when a tag filter that results in a parsed object is specified", () => {
     it("returns a 400", async () => {
       const workouts: Workout[] = [workout];
-      const repository = workoutRepository(workouts);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get("/api/workouts?tag[a]=tag1")
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(400);
+      const server = getServer(workouts);
+      await getRequest(server.app, "/api/workouts?tag[a]=tag1", 400);
     });
   });
 
@@ -83,13 +81,12 @@ describe("workouts", () => {
       const workout1 = { ...workout, name: "thename1" };
       const workout2 = { ...workout, name: "thename2" };
       const workouts: Workout[] = [workout1, workout2];
-      const repository = workoutRepository(workouts);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get("/api/workouts?searchName=name1")
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer(workouts);
+      const response = await getRequest(
+        server.app,
+        "/api/workouts?searchName=name1",
+        200,
+      );
       expect(response.body).toEqual([workout1]);
     });
   });
@@ -101,18 +98,13 @@ describe("workouts", () => {
     "when given an invalid combination of durationMin and durationMax",
     (durationMin?: number, durationMax?: number) => {
       it("returns a 400", async () => {
-        const repository = workoutRepository([]);
-        const server1 = server(repository);
+        const server = getServer([]);
         const query = Object.entries({ durationMin, durationMax })
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           .filter(([k, v]) => v)
           .map(([k, v]) => `${k}=${v}`)
           .join("&");
-        const response = await request(server1.app)
-          .get(`/api/workouts?${query}`)
-          .set("Accept", "application/json");
-        expect(response.headers["content-type"]).toMatch(/json/);
-        expect(response.status).toEqual(400);
+        await getRequest(server.app, `/api/workouts?${query}`, 400);
       });
     },
   );
@@ -124,16 +116,11 @@ describe("workouts", () => {
     "when given an invalid durationMin or durationMax",
     (durationMin: number | string, durationMax: number | string) => {
       it("returns a 400", async () => {
-        const repository = workoutRepository([]);
-        const server1 = server(repository);
+        const server = getServer([]);
         const query = Object.entries({ durationMin, durationMax })
           .map(([k, v]) => `${k}=${v}`)
           .join("&");
-        const response = await request(server1.app)
-          .get(`/api/workouts?${query}`)
-          .set("Accept", "application/json");
-        expect(response.headers["content-type"]).toMatch(/json/);
-        expect(response.status).toEqual(400);
+        await getRequest(server.app, `/api/workouts?${query}`, 400);
       });
     },
   );
@@ -142,26 +129,20 @@ describe("workouts", () => {
     it("filters correctly", async () => {
       const workout1: Workout = { ...workout, durationMins: 10 };
       const workout2: Workout = { ...workout, durationMins: 20 };
-      const repository = workoutRepository([workout1, workout2]);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get(`/api/workouts?durationMin=10&durationMax=11`)
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer([workout1, workout2]);
+      const response = await getRequest(
+        server.app,
+        `/api/workouts?durationMin=10&durationMax=11`,
+        200,
+      );
       expect(response.body).toEqual([workout1]);
     });
   });
 
   describe("when given an invalid duration", () => {
     it("returns a 400", async () => {
-      const repository = workoutRepository([]);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get(`/api/workouts?duration=abc`)
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(400);
+      const server = getServer([]);
+      await getRequest(server.app, `/api/workouts?duration=abc`, 400);
     });
   });
 
@@ -169,13 +150,12 @@ describe("workouts", () => {
     it("filters correctly", async () => {
       const workout1: Workout = { ...workout, durationMins: 20 };
       const workout2: Workout = { ...workout, durationMins: 30 };
-      const repository = workoutRepository([workout1, workout2]);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get(`/api/workouts?duration=20`)
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer([workout1, workout2]);
+      const response = await getRequest(
+        server.app,
+        `/api/workouts?duration=20`,
+        200,
+      );
       expect(response.body).toEqual([workout1]);
     });
   });
@@ -183,13 +163,8 @@ describe("workouts", () => {
   describe("when given a non-existent workout id", () => {
     it("returns a 404", async () => {
       const workout1: Workout = { ...workout, id: "jhwerc78y23489c7y" };
-      const repository = workoutRepository([workout1]);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get(`/api/workout/uh345c98y2345c90u`)
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(404);
+      const server = getServer([workout1]);
+      await getRequest(server.app, `/api/workout/uh345c98y2345c90u`, 404);
     });
   });
 
@@ -197,13 +172,12 @@ describe("workouts", () => {
     it("filters correctly", async () => {
       const workout1: Workout = { ...workout, id: "jhwerc78y23489c7y" };
       const workout2: Workout = { ...workout, id: "uh345c98y2345c90u" };
-      const repository = workoutRepository([workout1, workout2]);
-      const server1 = server(repository);
-      const response = await request(server1.app)
-        .get(`/api/workout/uh345c98y2345c90u`)
-        .set("Accept", "application/json");
-      expect(response.headers["content-type"]).toMatch(/json/);
-      expect(response.status).toEqual(200);
+      const server = getServer([workout1, workout2]);
+      const response = await getRequest(
+        server.app,
+        `/api/workout/uh345c98y2345c90u`,
+        200,
+      );
       expect(response.body).toEqual(workout2);
     });
   });

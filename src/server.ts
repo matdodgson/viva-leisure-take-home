@@ -1,44 +1,14 @@
 import express from "express";
 import { WorkoutFilters, WorkoutRepository } from "./workoutRepository";
 import qs from "qs";
+import {
+  errorResponse,
+  numericalParameter,
+  stringParameter,
+  ValidationError,
+} from "./expressUtils";
 
-function errorResponse(
-  res: express.Response,
-  error: string,
-  statusCode: number = 400,
-) {
-  res.status(statusCode).json({ error });
-}
-
-function stringParameter(
-  req: express.Request,
-  res: express.Response,
-  paramName: string,
-): string {
-  if (typeof req.query[paramName] !== "string") {
-    errorResponse(res, `bad ${paramName}`);
-    res.end();
-  }
-
-  return req.query[paramName] as string;
-}
-
-function numericalParameter(
-  req: express.Request,
-  res: express.Response,
-  paramName: string,
-): number {
-  const stringValue = stringParameter(req, res, paramName);
-  const numericalValue = parseInt(stringValue);
-  if (isNaN(numericalValue)) {
-    errorResponse(res, `bad ${paramName}`);
-    res.end();
-  }
-
-  return numericalValue;
-}
-
-export function server(workoutRepository: WorkoutRepository) {
+export function getServer(workoutRepository: WorkoutRepository) {
   const app = express();
 
   app.set("query parser", function (str: string) {
@@ -95,6 +65,24 @@ export function server(workoutRepository: WorkoutRepository) {
 
     res.json(workout);
   });
+
+  app.use(
+    (
+      err: Error,
+      req: express.Request,
+      res: express.Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      next: unknown,
+    ) => {
+      if (err instanceof ValidationError) {
+        errorResponse(res, err.message);
+        return;
+      }
+
+      console.error(err.stack);
+      errorResponse(res, "Internal server error", 500);
+    },
+  );
 
   return {
     app,

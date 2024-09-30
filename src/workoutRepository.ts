@@ -18,6 +18,7 @@ export function workoutRepository(workouts: Workout[]) {
   const repository: WorkoutRepository = {
     listTags: function (): string[] {
       const tags = workouts.map((w) => w.tags).flat();
+      // note: case sensitive tags
       const tagsNoDupes = [...new Set(tags)];
       return tagsNoDupes;
     },
